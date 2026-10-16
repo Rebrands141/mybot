@@ -2,54 +2,61 @@ import os
 import telebot
 from yt_dlp import YoutubeDL
 
-# Token cloud website se apne aap utha lega
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 bot = telebot.TeleBot(BOT_TOKEN)
 
+# Yahan aapka bataya hua naya welcome message add kar diya hai
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-    bot.reply_to(message, "👋 Welcome! Mujhe kisi bhi Video/Reel ka link bhejein, main high-speed cloud se download karke dunga. Aapka data aur phone bilkul safe hai!")
+    bot.reply_to(message, "hello welcome abhay downloader bot")
 
 @bot.message_handler(func=lambda message: True)
 def download_and_send_video(message):
     url = message.text
-    
     if not (url.startswith("http://") or url.startswith("https://")):
-        bot.reply_to(message, "❌ Kripya sahi link bhejein.")
+        bot.reply_to(message, "❌ Sahi link bhejein.")
         return
 
-    msg = bot.reply_to(message, "📥 Cloud Server video process kar raha hai... Intezar karein.")
+    msg = bot.reply_to(message, "⚡ Badi video hai, Direct Cloud Stream Active ho raha hai... Chat me hi video milegi.")
     
-    # Badi files ke liye cloud system configuration
     ydl_opts = {
-        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-        'outtmpl': 'cloud_dl_video.mp4',
+        'format': 'best[ext=mp4]/best',
         'quiet': True,
         'no_warnings': True,
     }
 
     try:
         with YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-        
-        bot.edit_message_text("📤 Telegram par send ki ja rahi hai...", message.chat.id, msg.message_id)
-        
-        with open('cloud_dl_video.mp4', 'rb') as video:
+            info = ydl.extract_info(url, download=False)
+            video_url = info.get('url', None)
+            video_title = info.get('title', 'Video')
+            
+        if video_url:
+            bot.edit_message_text("📤 Video mil gayi hai, Telegram Server par transfer ho rahi hai...", message.chat.id, msg.message_id)
+            
             bot.send_video(
                 message.chat.id, 
-                video, 
-                caption="✅ Downloaded successfully by Cloud Engine!",
-                timeout=300, # Badi video ke liye time badhaya
-                supports_streaming=True
+                video_url, 
+                caption=f"🎥 **Title:** {video_title}\n\n✅ Powered by Abhay Engine!",
+                supports_streaming=True,
+                timeout=600
             )
-        
-        os.remove('cloud_dl_video.mp4')
-        bot.delete_message(message.chat.id, msg.message_id)
+            bot.delete_message(message.chat.id, msg.message_id)
+        else:
+            raise Exception
 
     except Exception as e:
-        bot.edit_message_text("❌ Error: Video size bohot zyada bada hai ya platform supported nahi hai.", message.chat.id, msg.message_id)
-        if os.path.exists('cloud_dl_video.mp4'):
-            os.remove('cloud_dl_video.mp4')
+        if 'video_url' in locals() and video_url:
+            bot.edit_message_text(
+                f"🎬 **Title:** {video_title}\n\n"
+                f"⚠️ Video size bohot bada hai, Telegram direct file block kar raha hai. Niche click karke 1-click me direct save karein:\n\n"
+                f"📥 [⚡ Direct Download Link]({video_url})",
+                message.chat.id, 
+                msg.message_id,
+                parse_mode="Markdown"
+            )
+        else:
+            bot.edit_message_text("❌ Error: Video load nahi ho payi. Link private ho sakta hai.", message.chat.id, msg.message_id)
 
-print("Cloud Bot is running successfully...")
+print("24/7 Zero-Crash Bot Active...")
 bot.infinity_polling()
