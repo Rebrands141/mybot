@@ -1,2 +1,6 @@
 pyTelegramBotAPI
 yt-dlp
+pyTelegramBotAPI
+yt-dlp
+Pillow==11.0.0
+numpy==1.26.4
